@@ -81,10 +81,52 @@ public class Bot : MonoBehaviour
         Seek(chosenSpot);
 
     }
+    void CleverHide()
+    {
+        float dist = Mathf.Infinity;
+        Vector3 chosenSpot = Vector3.zero;
+        Vector3 chosenDir = Vector3.zero;
+        GameObject chosenGO = World.Instance.GetHidingsSpots()[0];
+
+        for (int i = 0; i < World.Instance.GetHidingsSpots().Length; i++)
+        {
+            Vector3 hideDir = World.Instance.GetHidingsSpots()[i].transform.position - target.transform.position;
+            Vector3 hidePos = World.Instance.GetHidingsSpots()[i].transform.position + hideDir.normalized * 10;
+
+            if (Vector3.Distance(this.transform.position, hidePos) < dist)
+            {
+                chosenSpot = hidePos;
+                chosenDir = hideDir;
+                chosenGO = World.Instance.GetHidingsSpots()[i];
+                dist = Vector3.Distance(this.transform.position, hidePos);
+            }
+        }
+        Collider hideCol = chosenGO.GetComponent<Collider>();
+        Ray backRay = new Ray(chosenSpot, chosenDir - chosenDir.normalized);
+        RaycastHit info;
+        float distance = 100.0f;
+        hideCol.Raycast(backRay, out info, distance);
+
+        Seek(info.point + chosenDir.normalized * 5);
+
+    }
+
+    bool CanSeeTarget()
+    {
+        RaycastHit raycastInfo;
+        Vector3 rayToTarget = target.transform.position - this.transform.position;
+        if(Physics.Raycast(this.transform.position, rayToTarget, out raycastInfo))
+        {
+            if (raycastInfo.transform.gameObject)
+                return true;
+        }
+        return false;
+    }
 
     // Update is called once per frame
     void Update()
     {
-        Hide();
+        if(CanSeeTarget())
+        CleverHide();
     }
 }
